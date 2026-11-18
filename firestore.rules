@@ -1,0 +1,162 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'preferredLanguage', 'preferredTheme', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'preferredLanguage', 'preferredTheme', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.preferredLanguage in ['ar', 'en']
+        && data.preferredTheme in ['dark', 'light', 'futuristic']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidConversation(data, userId, conversationId) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'mode', 'persona', 'lastMessagePreview', 'messageCount', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'userId', 'title', 'mode', 'persona', 'lastMessagePreview', 'messageCount', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.id == conversationId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.mode in ['chat', 'docs', 'canvas', 'audio']
+        && data.persona is string && data.persona.size() >= 1 && data.persona.size() <= 60
+        && data.lastMessagePreview is string && data.lastMessagePreview.size() <= 300
+        && data.messageCount is int && data.messageCount >= 0 && data.messageCount <= 5000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMessage(data, userId, conversationId, messageId) {
+      return data.keys().hasAll(['id', 'userId', 'conversationId', 'role', 'content', 'createdAt'])
+        && data.keys().hasOnly(['id', 'userId', 'conversationId', 'role', 'content', 'thinkingLevel', 'attachmentSummary', 'sources', 'createdAt'])
+        && isValidId(data.id)
+        && data.id == messageId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && isValidId(data.conversationId)
+        && data.conversationId == conversationId
+        && data.role in ['user', 'assistant']
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 32000
+        && (!('thinkingLevel' in data) || (data.thinkingLevel is string && data.thinkingLevel.size() <= 20))
+        && (!('attachmentSummary' in data) || (data.attachmentSummary is string && data.attachmentSummary.size() <= 300))
+        && (!('sources' in data) || (data.sources is list && data.sources.size() <= 10 && (data.sources.size() == 0 || data.sources[0] is map)))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidVectorDesign(data, userId, designId) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'prompt', 'svgCode', 'aspectRatio', 'createdAt'])
+        && data.keys().hasOnly(['id', 'userId', 'title', 'prompt', 'svgCode', 'aspectRatio', 'createdAt'])
+        && isValidId(data.id)
+        && data.id == designId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.prompt is string && data.prompt.size() >= 1 && data.prompt.size() <= 2000
+        && data.svgCode is string && data.svgCode.size() >= 1 && data.svgCode.size() <= 64000
+        && data.aspectRatio in ['1:1', '16:9', '4:3', '3:4']
+        && data.createdAt is timestamp;
+    }
+
+    // Users collection (PII isolated strictly to owner; listing denied)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'preferredLanguage', 'preferredTheme', 'updatedAt']);
+      allow delete: if false;
+
+      // Conversations subcollection
+      match /conversations/{conversationId} {
+        allow get: if isValidId(userId) && isValidId(conversationId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(conversationId)
+          && isOwner(userId)
+          && isValidConversation(incoming(), userId, conversationId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(conversationId)
+          && isOwner(userId)
+          && isValidConversation(incoming(), userId, conversationId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().mode == existing().mode
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'persona', 'lastMessagePreview', 'messageCount', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(conversationId) && isOwner(userId);
+
+        // Messages subcollection (Master Gate checks parent conversation ownership)
+        match /messages/{messageId} {
+          allow get: if isValidId(userId) && isValidId(conversationId) && isValidId(messageId) && isOwner(userId);
+          allow list: if isOwner(userId) && existing().userId == request.auth.uid && existing().conversationId == conversationId;
+          allow create: if isValidId(userId)
+            && isValidId(conversationId)
+            && isValidId(messageId)
+            && isOwner(userId)
+            && isValidMessage(incoming(), userId, conversationId, messageId)
+            && incoming().createdAt == request.time
+            && get(/databases/$(database)/documents/users/$(userId)/conversations/$(conversationId)).data.userId == request.auth.uid;
+          allow update: if false;
+          allow delete: if isValidId(userId) && isValidId(conversationId) && isValidId(messageId) && isOwner(userId);
+        }
+      }
+
+      // Saved Vector Studio designs
+      match /designs/{designId} {
+        allow get: if isValidId(userId) && isValidId(designId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(designId)
+          && isOwner(userId)
+          && isValidVectorDesign(incoming(), userId, designId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(designId) && isOwner(userId);
+      }
+    }
+  }
+}

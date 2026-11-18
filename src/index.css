@@ -1,0 +1,207 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root,
+html.theme-light {
+  --bg-canvas: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --bg-hover: #E2E8F0;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --accent: #1D4ED8;
+  --accent-hover: #1E40AF;
+  --accent-fg: #FFFFFF;
+  --accent-soft: rgba(29, 78, 216, 0.08);
+  --danger: #DC2626;
+  --danger-soft: rgba(220, 38, 38, 0.08);
+  --success: #15803D;
+  --success-soft: rgba(21, 128, 61, 0.08);
+  --warning: #B45309;
+  --warning-soft: rgba(180, 83, 9, 0.08);
+  --grid-pattern: none;
+}
+
+html.theme-dark {
+  --bg-canvas: #090D16;
+  --bg-surface: #111827;
+  --bg-elevated: #1A2333;
+  --bg-hover: #243044;
+  --border-subtle: rgba(148, 163, 184, 0.16);
+  --border-strong: rgba(148, 163, 184, 0.30);
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --accent: #10B981;
+  --accent-hover: #34D399;
+  --accent-fg: #022C22;
+  --accent-soft: rgba(16, 185, 129, 0.12);
+  --danger: #F87171;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --success: #34D399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --warning: #FBBF24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --grid-pattern: none;
+}
+
+html.theme-futuristic {
+  --bg-canvas: #040711;
+  --bg-surface: #0B1121;
+  --bg-elevated: #111A30;
+  --bg-hover: #182542;
+  --border-subtle: rgba(34, 211, 238, 0.22);
+  --border-strong: rgba(34, 211, 238, 0.45);
+  --text-primary: #F0F9FF;
+  --text-secondary: #BAE6FD;
+  --text-muted: #7DD3FC;
+  --accent: #22D3EE;
+  --accent-hover: #67E8F9;
+  --accent-fg: #04131E;
+  --accent-soft: rgba(34, 211, 238, 0.12);
+  --danger: #FB7185;
+  --danger-soft: rgba(251, 113, 133, 0.12);
+  --success: #34D399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --warning: #FBBF24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --grid-pattern: radial-gradient(rgba(34, 211, 238, 0.09) 1px, transparent 1px);
+}
+
+@layer base {
+  html {
+    font-family: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[dir="ltr"] {
+    font-family: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+  }
+
+  code, pre, kbd, samp, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.futuristic-grid {
+  background-image: var(--grid-pattern);
+  background-size: 24px 24px;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Markdown prose inside chat & docs */
+.prose-ai {
+  line-height: 1.7;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.prose-ai p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-ai p:first-child {
+  margin-top: 0;
+}
+
+.prose-ai p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-ai h1, .prose-ai h2, .prose-ai h3, .prose-ai h4 {
+  font-weight: 600;
+  margin-top: 1.15rem;
+  margin-bottom: 0.45rem;
+  color: var(--text-primary);
+}
+
+.prose-ai h1 { font-size: 1.25rem; }
+.prose-ai h2 { font-size: 1.125rem; }
+.prose-ai h3 { font-size: 1rem; }
+
+.prose-ai ul, .prose-ai ol {
+  margin-top: 0.4rem;
+  margin-bottom: 0.6rem;
+  padding-inline-start: 1.35rem;
+}
+
+.prose-ai ul { list-style-type: disc; }
+.prose-ai ol { list-style-type: decimal; }
+
+.prose-ai li {
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.prose-ai a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose-ai blockquote {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-elevated);
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.prose-ai table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+}
+
+.prose-ai th, .prose-ai td {
+  border: 1px solid var(--border-subtle);
+  padding: 0.45rem 0.65rem;
+  text-align: start;
+}
+
+.prose-ai th {
+  background-color: var(--bg-elevated);
+  font-weight: 600;
+}
+
+.prose-ai code:not(pre code) {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.3rem;
+  font-size: 0.84em;
+  direction: ltr;
+  unicode-bidi: isolate;
+}

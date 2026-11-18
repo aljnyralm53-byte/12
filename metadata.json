@@ -1,0 +1,6 @@
+{
+  "name": "Nuha AI Studio | نُهى للذكاء الاصطناعي",
+  "description": "منصة ذكاء اصطناعي شاملة ثنائية اللغة للمحادثة والبحث، تحليل المستندات، استوديو الرسوميات المتجهة، ومعمل الصوتيات.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
